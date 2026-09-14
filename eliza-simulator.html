@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ELIZA Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a1929;--term-bg:#0a0a0a;--green:#33ff33;--dim-green:#1a8a1a;--amber:#ffaa00;--ice:#6CC8DE;--text2:#8ba3bd;--sans:'Outfit',sans-serif;--ser:'DM Serif Display',serif;--mono:'Courier New',Courier,monospace}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--sans);background:var(--bg);color:#e0eaf4;min-height:100vh;position:relative}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMTIiIGhlaWdodD0iMTk0Ij48cGF0aCBkPSJNNTYgMEwxMTIgMjh2NTZMMTI4IDExMiA1NiAxNDAgMCAxMTJWNTZMMCAyOHpNNTYgNTRMMTEyIDgydjU2bDAgMjgtNTYgMjhMMCAxNjZWMTEwTDAgODJ6IiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMTA4LDIwMCwyMjIsLjA3KSIgc3Ryb2tlLXdpZHRoPSIuNiIvPjwvc3ZnPg==");background-size:112px 194px}
+.wrap{position:relative;z-index:1;max-width:800px;margin:0 auto;padding:1.5rem}
+.hdr{text-align:center;margin-bottom:1.2rem;border-bottom:1px solid rgba(255,255,255,.06);padding-bottom:1rem}
+.hdr h1{font-family:var(--ser);font-size:1.6rem;color:#fff}.hdr h1 span{color:var(--green)}
+.hdr-sub{font-size:.65rem;color:var(--text2);margin-top:.3rem}
+.hdr-desc{font-size:.75rem;color:var(--text2);margin-top:.6rem;max-width:600px;margin-left:auto;margin-right:auto;line-height:1.5}
+/* Terminal */
+.terminal{background:var(--term-bg);border:2px solid #222;border-radius:8px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+.term-bar{background:#1a1a1a;padding:.4rem .8rem;display:flex;align-items:center;gap:.5rem;border-bottom:1px solid #222}
+.term-dot{width:10px;height:10px;border-radius:50%}.term-dot.r{background:#ff5f57}.term-dot.y{background:#ffbd2e}.term-dot.g{background:#28c840}
+.term-title{font-family:var(--mono);font-size:.65rem;color:#666;margin-left:.5rem}
+.term-body{padding:1rem;height:420px;overflow-y:auto;font-family:var(--mono);font-size:.82rem;line-height:1.6;scrollbar-width:thin;scrollbar-color:#333 transparent}
+.term-body::-webkit-scrollbar{width:6px}.term-body::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+/* Scanline effect */
+.term-body::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.03) 2px,rgba(0,0,0,.03) 4px)}
+.msg{margin-bottom:.6rem;position:relative}
+.msg-user{color:var(--green)}
+.msg-user::before{content:'> ';color:var(--dim-green)}
+.msg-eliza{color:var(--green);opacity:.85}
+.msg-eliza::before{content:'ELIZA: ';color:var(--dim-green);font-weight:bold}
+/* Pattern explanation */
+.msg-explain{margin:.3rem 0 .5rem 1.5rem;padding:.4rem .6rem;border-left:2px solid var(--amber);background:rgba(255,170,0,.05);font-size:.68rem;color:var(--amber);cursor:pointer;border-radius:0 4px 4px 0}
+.msg-explain summary{outline:none;cursor:pointer;opacity:.7;font-size:.62rem;text-transform:uppercase;letter-spacing:.05em}
+.msg-explain summary:hover{opacity:1}
+.msg-explain .ex-row{margin-top:.3rem;color:#cc8800}
+.msg-explain .ex-label{color:#886600;font-size:.6rem}
+.msg-explain .ex-val{color:var(--amber)}
+/* Input */
+.term-input{display:flex;align-items:center;border-top:1px solid #222;background:#0d0d0d;padding:.5rem .8rem}
+.term-input::before{content:'> ';color:var(--dim-green);font-family:var(--mono);font-size:.85rem}
+.term-input input{flex:1;background:none;border:none;color:var(--green);font-family:var(--mono);font-size:.82rem;outline:none;caret-color:var(--green)}
+.term-input input::placeholder{color:#2a5a2a}
+/* Welcome message */
+.msg-system{color:var(--dim-green);font-style:italic;margin-bottom:.8rem;padding-bottom:.6rem;border-bottom:1px solid #1a1a1a}
+/* Footer */
+.info{margin-top:1rem;padding:.7rem .9rem;background:rgba(108,200,222,.03);border:1px solid rgba(108,200,222,.08);border-radius:8px;font-size:.65rem;color:var(--text2);line-height:1.5}
+.info strong{color:var(--ice)}
+.footer{text-align:center;padding:1rem 0;font-size:.6rem;color:#56728a;margin-top:.8rem;border-top:1px solid rgba(255,255,255,.06)}
+.footer a{color:var(--ice);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="hdr">
+  <h1><span>ELIZA</span> Simulator</h1>
+  <div class="hdr-sub">Ch. 5 · The First Chatbot (1966)</div>
+  <div class="hdr-desc">Joseph Weizenbaum's ELIZA used simple pattern matching to simulate a Rogerian psychotherapist. It understood nothing — yet people confided their deepest problems to it. His own secretary asked him to leave the room for privacy. Try it yourself, then see how it works.</div>
+</div>
+<div class="terminal">
+  <div class="term-bar">
+    <div class="term-dot r"></div><div class="term-dot y"></div><div class="term-dot g"></div>
+    <div class="term-title">ELIZA — MIT AI Lab, 1966</div>
+  </div>
+  <div class="term-body" id="chat">
+    <div class="msg msg-system">ELIZA Rogerian Therapist Simulation<br>Based on Joseph Weizenbaum's original 1966 program<br>Type a message and press Enter to begin.<br>─────────────────────────────────────</div>
+    <div class="msg msg-eliza">Hello. I am ELIZA. How are you feeling today?</div>
+  </div>
+  <div class="term-input">
+    <input type="text" id="userInput" placeholder="Type here..." autofocus autocomplete="off">
+  </div>
+</div>
+<div class="info">
+  <strong>How ELIZA works:</strong> Each response is generated by scanning your input for keywords, decomposing the sentence with a pattern, then reassembling it as a question. Click the <span style="color:#ffaa00">▶ Pattern Match</span> labels to see exactly which rule fired and how your words were transformed. ELIZA has no memory, no understanding, and no model of the world — just ~50 text substitution rules. The fact that it feels like a real conversation is the <strong>ELIZA effect</strong>.
+</div>
+<div class="footer">Created by <a href="https://thwayai.com">Thway AI LLC</a> · Companion to <em>The Seventh Revolution</em></div>
+</div>
+
+<script>
+// ═══ ELIZA ENGINE (faithful to 1966 rules) ═══
+
+// Reflection map: swap pronouns for responses
+const REFLECT = {
+  'i':'you','me':'you','my':'your','am':'are','was':'were',
+  'i\'d':'you would','i\'ve':'you have','i\'ll':'you will',
+  'myself':'yourself','you':'I','your':'my','yours':'mine',
+  'are':'am','were':'was','you\'d':'I would','you\'ve':'I have'
+};
+
+function reflect(text) {
+  return text.split(' ').map(w => REFLECT[w.toLowerCase()] || w).join(' ');
+}
+
+// Pattern rules: [keyword, weight, [[decomposition_regex, [reassembly_responses]]]]
+const RULES = [
+  ['sorry', 10, [[/(.*)/, [
+    'Please don\'t apologize.',
+    'Apologies are not necessary.',
+    'What feelings does apologizing bring up?']]]],
+  ['remember', 5, [
+    [/(.*)i remember(.*)/, [
+      'Do you often think of (2)?',
+      'What else does thinking of (2) bring to mind?',
+      'What about (2) is important to you?']],
+    [/(.*)do you remember(.*)/, [
+      'Did you think I would forget (2)?',
+      'Why do you think I should recall (2)?']]]],
+  ['if', 3, [[/(.*)if(.*)/, [
+    'Do you think it\'s likely that (2)?',
+    'Do you wish that (2)?',
+    'What do you know about (2)?']]]],
+  ['dreamed', 4, [[/(.*)i dreamed(.*)/, [
+    'Really, (2)?',
+    'Have you ever fantasized about (2) while you were awake?',
+    'Have you dreamed about (2) before?']]]],
+  ['dream', 3, [[/(.*)/, [
+    'What does that dream suggest to you?',
+    'Do you dream often?',
+    'What persons appear in your dreams?']]]],
+  ['perhaps', 2, [[/(.*)/, [
+    'You don\'t seem quite certain.',
+    'Why the uncertain tone?',
+    'Can\'t you be more positive?']]]],
+  ['name', 15, [[/(.*)/, [
+    'I am not interested in names.',
+    'I don\'t care about names — please continue.']]]],
+  ['hello', 1, [[/(.*)/, [
+    'Hello. What is on your mind today?',
+    'Hi. Tell me what\'s been troubling you.']]]],
+  ['computer', 50, [[/(.*)/, [
+    'Do computers worry you?',
+    'Why do you mention computers?',
+    'What do you think machines have to do with your problem?',
+    'Don\'t you think computers can help people?']]]],
+  ['am', 0, [
+    [/am i(.*)/, [
+      'Do you believe you are (1)?',
+      'Would you want to be (1)?',
+      'Do you wish I would tell you you are (1)?']],
+    [/i am(.*)/, [
+      'How long have you been (1)?',
+      'How does being (1) make you feel?',
+      'Do you enjoy being (1)?']]]],
+  ['your', 2, [
+    [/(.*)your(.*)/, [
+      'Why are you concerned about my (2)?',
+      'What about your own (2)?']]]],
+  ['was', 2, [
+    [/was i(.*)/, [
+      'What if you were (1)?',
+      'Do you think you were (1)?']],
+    [/i was(.*)/, [
+      'Were you really?',
+      'Why do you tell me you were (1) now?']]]],
+  ['mother', 50, [[/(.*)mother(.*)/, [
+    'Tell me more about your mother.',
+    'What was your relationship with your mother like?',
+    'How does your mother make you feel?',
+    'Does your family come to mind often?']]]],
+  ['father', 50, [[/(.*)father(.*)/, [
+    'Tell me more about your father.',
+    'How did your father make you feel?',
+    'Does your relationship with your father relate to your feelings today?']]]],
+  ['child', 50, [[/(.*)/, [
+    'Did you have close friends as a child?',
+    'What is your favorite childhood memory?',
+    'Do you recall any dreams from childhood?']]]],
+  ['i desire', 5, [[/i desire(.*)/, [
+    'Why do you desire (1)?',
+    'What would it mean to you if you got (1)?',
+    'Suppose you got (1) soon — what then?']]]],
+  ['i want', 5, [[/i want(.*)/, [
+    'What would it mean to you if you got (1)?',
+    'Why do you want (1)?',
+    'Suppose you got (1) — would that really help?']]]],
+  ['i need', 5, [[/i need(.*)/, [
+    'Why do you need (1)?',
+    'Would it really help you to get (1)?',
+    'Are you sure you need (1)?']]]],
+  ['i can\'t', 3, [[/i can\'t(.*)/, [
+    'How do you know you can\'t (1)?',
+    'Have you tried?',
+    'Perhaps you could (1) now.',
+    'What makes you think you can\'t (1)?']]]],
+  ['i don\'t', 3, [[/i don\'t(.*)/, [
+    'Don\'t you really (1)?',
+    'Why don\'t you (1)?',
+    'Do you wish you could (1)?']]]],
+  ['i feel', 5, [[/i feel(.*)/, [
+    'Tell me more about such feelings.',
+    'Do you often feel (1)?',
+    'When you feel (1), what do you do?']]]],
+  ['i think', 3, [[/i think(.*)/, [
+    'Do you doubt (1)?',
+    'Do you really think so?',
+    'But you\'re not sure (1)?']]]],
+  ['i am', 3, [[/i am(.*)/, [
+    'Is it because you are (1) that you came to me?',
+    'How long have you been (1)?',
+    'Do you believe it is normal to be (1)?']]]],
+  ['you', 3, [
+    [/(.*)you are(.*)/, [
+      'What makes you think I am (2)?',
+      'Does it please you to believe I am (2)?']],
+    [/(.*)you(.*)me(.*)/, [
+      'Why do you think I (2) you?',
+      'You like to think I (2) you — don\'t you?',
+      'What makes you think I (2) you?']]]],
+  ['yes', 1, [[/(.*)/, [
+    'You seem quite sure.',
+    'OK, but can you elaborate a bit?',
+    'I see. And what does that tell you?']]]],
+  ['no', 1, [[/(.*)/, [
+    'Why not?',
+    'You are being a bit negative.',
+    'Are you saying no just to be negative?']]]],
+  ['my', 2, [
+    [/(.*)my(.*)/, [
+      'Your (2)? Tell me more.',
+      'Why do you say your (2)?',
+      'Does that suggest anything else to you about your (2)?']]]],
+  ['can', 1, [
+    [/can you(.*)/, [
+      'You believe I can (1), don\'t you?',
+      'Why do you ask if I can (1)?',
+      'Perhaps you would like to be able to (1) yourself?']],
+    [/can i(.*)/, [
+      'Whether or not you can (1) depends on you more than on me.',
+      'Do you want to be able to (1)?']]]],
+  ['what', 1, [[/(.*)/, [
+    'Why do you ask?',
+    'Does that question interest you?',
+    'What answer would please you most?']]]],
+  ['because', 5, [[/(.*)/, [
+    'Is that the real reason?',
+    'Don\'t any other reasons come to mind?',
+    'Does that reason seem to explain anything else?']]]],
+  ['why', 1, [
+    [/why don\'t you(.*)/, [
+      'Do you believe I don\'t (1)?',
+      'Perhaps I will (1) in good time.']],
+    [/why can\'t i(.*)/, [
+      'Do you think you should be able to (1)?',
+      'Do you want to be able to (1)?']],
+    [/(.*)/, [
+      'Why do you ask?',
+      'What do you think?']]]],
+  ['everyone', 2, [[/(.*)/, [
+    'Really, everyone?',
+    'Can you think of anyone in particular?',
+    'Who, for example?']]]],
+  ['always', 1, [[/(.*)/, [
+    'Can you think of a specific example?',
+    'When?',
+    'Really, always?']]]],
+  ['alike', 10, [[/(.*)/, [
+    'In what way?',
+    'What resemblance do you see?']]]],
+];
+
+const DEFAULTS = [
+  'Very interesting. Tell me more.',
+  'I\'m not sure I understand you fully.',
+  'Please go on.',
+  'What does that suggest to you?',
+  'Do you feel strongly about discussing such things?',
+  'That is interesting. Please continue.',
+  'Tell me more about that.',
+  'Does talking about this bother you?',
+  'Can you elaborate on that?',
+  'I see. And what else comes to mind?'
+];
+
+let ruleCounters = {};
+
+function elizaResponse(input) {
+  const cleaned = input.toLowerCase().replace(/[^\w\s']/g, '').trim();
+  if (!cleaned) return { text: 'Please say something.', rule: null };
+
+  // Try each rule by priority (weight)
+  const sorted = [...RULES].sort((a, b) => b[1] - a[1]);
+  
+  for (const [keyword, weight, patterns] of sorted) {
+    if (cleaned.indexOf(keyword) === -1) continue;
+    
+    for (const [regex, responses] of patterns) {
+      const match = cleaned.match(regex);
+      if (!match) continue;
+      
+      // Pick response (cycle through)
+      const ruleKey = keyword + ':' + regex.toString();
+      if (!ruleCounters[ruleKey]) ruleCounters[ruleKey] = 0;
+      const respIdx = ruleCounters[ruleKey] % responses.length;
+      ruleCounters[ruleKey]++;
+      
+      let response = responses[respIdx];
+      
+      // Fill in captured groups with reflection
+      for (let i = 1; i <= 5; i++) {
+        if (match[i]) {
+          response = response.replace('(' + i + ')', reflect(match[i].trim()));
+        }
+      }
+      
+      return {
+        text: response,
+        rule: {
+          keyword: keyword,
+          weight: weight,
+          pattern: regex.toString().replace(/\//g, ''),
+          captured: match.slice(1).filter(Boolean).map(s => s.trim()),
+          reflected: match.slice(1).filter(Boolean).map(s => reflect(s.trim())),
+          template: responses[respIdx]
+        }
+      };
+    }
+  }
+  
+  // Default response
+  const dIdx = Math.floor(Math.random() * DEFAULTS.length);
+  return { 
+    text: DEFAULTS[dIdx],
+    rule: { keyword: '(none)', weight: 0, pattern: 'No keyword matched', captured: [], reflected: [], template: DEFAULTS[dIdx] }
+  };
+}
+
+// ═══ UI ═══
+const chat = document.getElementById('chat');
+const input = document.getElementById('userInput');
+
+function addMessage(text, type, ruleInfo) {
+  const msg = document.createElement('div');
+  msg.className = 'msg msg-' + type;
+  msg.textContent = text;
+  chat.appendChild(msg);
+  
+  if (type === 'eliza' && ruleInfo) {
+    const explain = document.createElement('details');
+    explain.className = 'msg-explain';
+    explain.innerHTML = '<summary>▶ Pattern Match</summary>' +
+      '<div class="ex-row"><span class="ex-label">Keyword: </span><span class="ex-val">"' + ruleInfo.keyword + '" (weight: ' + ruleInfo.weight + ')</span></div>' +
+      '<div class="ex-row"><span class="ex-label">Pattern: </span><span class="ex-val">' + ruleInfo.pattern + '</span></div>' +
+      (ruleInfo.captured.length ? '<div class="ex-row"><span class="ex-label">Captured: </span><span class="ex-val">"' + ruleInfo.captured.join('", "') + '"</span></div>' : '') +
+      (ruleInfo.reflected.length ? '<div class="ex-row"><span class="ex-label">Reflected: </span><span class="ex-val">"' + ruleInfo.reflected.join('", "') + '"</span></div>' : '') +
+      '<div class="ex-row"><span class="ex-label">Template: </span><span class="ex-val">' + ruleInfo.template + '</span></div>';
+    chat.appendChild(explain);
+  }
+  
+  chat.scrollTop = chat.scrollHeight;
+}
+
+input.addEventListener('keydown', function(e) {
+  if (e.key !== 'Enter' || !input.value.trim()) return;
+  const userText = input.value.trim();
+  input.value = '';
+  
+  addMessage(userText, 'user');
+  
+  // Small delay for realism
+  setTimeout(function() {
+    const result = elizaResponse(userText);
+    addMessage(result.text, 'eliza', result.rule);
+  }, 300 + Math.random() * 500);
+});
+</script>
+</body>
+</html>

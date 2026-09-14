@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Six-Layer Cluster Diagram</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a1929;--bg2:#0f2640;--ice:#6CC8DE;--text:#e0eaf4;--text2:#8ba3bd;--text3:#56728a;--bdr:rgba(255,255,255,.08);--serif:'DM Serif Display',Georgia,serif;--sans:'Outfit',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;position:relative}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMTIiIGhlaWdodD0iMTk0Ij48cGF0aCBkPSJNNTYgMEwxMTIgMjh2NTZMMTI4IDExMiA1NiAxNDAgMCAxMTJWNTZMMCAyOHpNNTYgNTRMMTEyIDgydjU2bDAgMjgtNTYgMjhMMCAxNjZWMTEwTDAgODJ6IiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMTA4LDIwMCwyMjIsLjA3KSIgc3Ryb2tlLXdpZHRoPSIuNiIvPjwvc3ZnPg==");background-size:112px 194px}
+body::after{content:'';position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;background:radial-gradient(ellipse at 50% 30%,rgba(108,200,222,.05),transparent 60%)}
+.wrap{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:1.5rem}
+.hdr{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--bdr);padding-bottom:1rem;margin-bottom:.5rem}
+.hdr h1{font-family:var(--serif);font-size:1.2rem;color:#fff}.hdr h1 span{color:var(--ice)}
+.hdr-sub{font-size:.65rem;color:var(--text3)}
+.subtitle{font-size:.75rem;color:var(--text2);margin-bottom:1.2rem;line-height:1.5}
+.diagram{position:relative;width:100%;height:90vh;min-height:750px}
+.diagram svg{width:100%;height:100%}
+/* Connection lines */
+.conn{stroke-width:4;fill:none;opacity:.1;transition:opacity .4s,stroke-width .4s;cursor:pointer;pointer-events:stroke}
+.conn.active{opacity:.7;stroke-width:6}
+.conn.pulse{animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{stroke-dashoffset:0}50%{stroke-dashoffset:20}}
+/* Nodes */
+.node{cursor:pointer;transition:transform .3s}
+.node:hover{transform:scale(1.08)}
+.node.selected .node-ring{stroke-width:3;opacity:1}
+.node-bg{fill:var(--bg);stroke-width:3;transition:all .3s}
+.node-ring{fill:none;stroke-width:4;opacity:.4;transition:all .3s}
+
+.node-label{font-family:var(--sans);font-size:42px;font-weight:800;fill:var(--text);text-anchor:middle}
+.node-sub{font-family:var(--sans);font-size:28px;fill:var(--text3);text-anchor:middle}
+.node.dimmed{opacity:.25;transition:opacity .4s}
+/* Synergy labels */
+.syn-label{pointer-events:none;opacity:0;transition:opacity .3s}
+.syn-label.show{opacity:1}
+.syn-bg{fill:rgba(10,25,41,.92);rx:10}
+.syn-text{font-family:var(--sans);font-size:32px;font-weight:700;fill:var(--text);text-anchor:middle}
+/* Info panel */
+.info{margin-top:1rem;background:var(--bg2);border:1px solid var(--bdr);border-radius:10px;padding:1rem 1.2rem;min-height:80px;transition:all .3s}
+.info-title{font-family:var(--serif);font-size:1.05rem;margin-bottom:.4rem}
+.info-desc{font-size:.75rem;color:var(--text2);line-height:1.6}
+.info-connections{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem}
+.info-conn{font-size:.65rem;padding:.25rem .6rem;border-radius:100px;border:1px solid var(--bdr);color:var(--text2);background:rgba(255,255,255,.03);cursor:pointer;transition:.2s}
+.info-conn:hover{background:rgba(255,255,255,.06);border-color:var(--text3)}
+.info-conn .arrow{color:var(--ice);margin:0 .2rem}
+.fn{margin-top:1rem;padding:.6rem .8rem;background:rgba(108,200,222,.03);border:1px solid rgba(108,200,222,.08);border-radius:8px;font-size:.6rem;color:var(--text3);line-height:1.5}
+.footer{text-align:center;padding:.8rem;font-size:.6rem;color:var(--text3);margin-top:.8rem;border-top:1px solid var(--bdr)}
+.footer a{color:var(--ice);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="hdr">
+  <div><h1>Six-Layer <span>Cluster</span> Diagram</h1><div class="hdr-sub">Ch. 3 · The Planetary Ladder</div></div>
+</div>
+<div class="subtitle">The Seventh Revolution isn't one technology — it's six, converging simultaneously. Click any node to explore how each technology reinforces the others.</div>
+<div class="diagram"><svg id="svg" viewBox="0 0 3200 2400"></svg></div>
+<div class="info" id="info">
+  <div class="info-title" id="infoTitle" style="color:var(--ice)">Click a technology to explore</div>
+  <div class="info-desc" id="infoDesc">Each of the six cluster technologies connects to all five others, creating 15 synergy pairs. Together they form the convergence cluster that defines the Seventh Revolution — humanity's path to Type I civilization.</div>
+  <div class="info-connections" id="infoConns"></div>
+</div>
+<div class="fn">The convergence cluster is what makes the Seventh Revolution unique. Previous revolutions had one or two enabling technologies. This one has six, all reinforcing each other simultaneously — the first time in history this has happened at this scale.</div>
+<div class="footer">Created by <a href="https://thwayai.com">Thway AI LLC</a> · Companion to <em>The Seventh Revolution</em></div>
+</div>
+
+<script>
+const NODES = [
+  {id:'ai',label:'AI',sub:'Brain',color:'#6CC8DE',
+    iconPath:'M-8,-12 C-8,-18 8,-18 8,-12 C14,-12 14,4 8,4 L8,8 C8,14 -8,14 -8,8 L-8,4 C-14,4 -14,-12 -8,-12Z',
+    iconPath2:'M-4,0 L4,0 M0,-6 L0,6 M-6,-8 C-6,-4 -2,-2 0,-6 M6,-8 C6,-4 2,-2 0,-6',
+    iconFill:false,
+    desc:'Artificial intelligence — the nervous system of the cluster. AI optimizes every other technology, from designing quantum circuits to piloting spacecraft to managing fusion reactors.'},
+  {id:'robot',label:'Robotics',sub:'Body',color:'#FB7185',
+    iconPath:'M-10,-6 L-10,10 L10,10 L10,-6 L-10,-6Z M-7,-6 L-7,-12 L7,-12 L7,-6 M-5,0 L-2,0 M2,0 L5,0 M-13,0 L-10,0 M10,0 L13,0 M-6,14 L-6,10 M6,14 L6,10',
+    iconFill:false,
+    desc:'Robotics gives the cluster physical form. Intelligent machines that build, manufacture, explore, and operate in environments too dangerous or distant for humans.'},
+  {id:'nuc',label:'Nuclear',sub:'Fuel',color:'#4ADE80',
+    iconPath:'M-1.7,-3.6 L-5.5,-11.8 A13,13,0,0,1,5.5,-11.8 L1.7,-3.6 A4,4,0,0,0,-1.7,-3.6Z M4,-0.3 L13,1.1 A13,13,0,0,1,7.5,10.6 L2.3,3.3 A4,4,0,0,0,4,-0.3Z M-2.3,3.3 L-7.5,10.6 A13,13,0,0,1,-13,1.1 L-4,-0.3 A4,4,0,0,0,-2.3,3.3Z M0,0 m-2,0 a2,2,0,1,0,4,0 a2,2,0,1,0,-4,0',
+    iconFill:true,
+    desc:"Nuclear energy — especially fusion — is the cluster's power source. Without abundant clean energy, none of the other five technologies can scale to planetary impact."},
+  {id:'btc',label:'Bitcoin',sub:'Wallet',color:'#F97316',
+    iconPath:'M-4,-14 L-4,14 M4,-14 L4,14 M-6,-10 L6,-10 C12,-10 12,-2 6,-2 L-6,-2 M-6,-2 L8,-2 C14,-2 14,6 8,6 L-6,6',
+    iconFill:false,
+    desc:'Bitcoin provides the economic layer — a neutral, programmable, censorship-resistant monetary network that lets machines transact and civilizations settle value across any distance.'},
+  {id:'qm',label:'Quantum',sub:'Accelerator',color:'#C084FC',
+    iconPath:'M-9,-11 L9,-11 L9,11 L-9,11 Z M-5,-11 L-5,-14 M0,-11 L0,-14 M5,-11 L5,-14 M-5,11 L-5,14 M0,11 L0,14 M5,11 L5,14 M-9,-5 L-12,-5 M-9,0 L-12,0 M-9,5 L-12,5 M9,-5 L12,-5 M9,0 L12,0 M9,5 L12,5',
+    iconPath2:'M-7,0 A7,3,0,1,1,7,0 A7,3,0,1,1,-7,0 M-3.5,-6 A7,3,60,1,1,3.5,6 A7,3,60,1,1,-3.5,-6 M3.5,-6 A7,3,-60,1,1,-3.5,6 A7,3,-60,1,1,3.5,-6 M0,0 m-2,0 a2,2,0,1,0,4,0 a2,2,0,1,0,-4,0',
+    iconFill:false,
+    desc:"Quantum computing is the accelerator — solving problems in minutes that classical computers couldn't solve in millennia. Materials science, cryptography, optimization."},
+  {id:'space',label:'Space',sub:'Frontier',color:'#818CF8',
+    iconPath:'M0,-16 L-5,-6 L-5,8 L5,8 L5,-6 Z M-5,3 L-12,12 L-5,8 Z M5,3 L12,12 L5,8 Z',iconPath2:'M-3,8 Q-1,16 0,13 Q1,16 3,8',
+    iconFill:false,
+    desc:'Space is the frontier — the reason the cluster matters. A Type I civilization must harness planetary resources, and eventually reach beyond. Space gives the cluster its purpose.'}
+];
+
+// 15 synergy pairs with descriptions
+const SYNERGIES = [
+  {a:0,b:1,s:'AI gives robots perception and decision-making; robots give AI physical embodiment'},
+  {a:0,b:2,s:'AI optimizes reactor efficiency and plasma control; nuclear provides compute energy'},
+  {a:0,b:3,s:'AI agents that earn, transact, and allocate resources autonomously'},
+  {a:0,b:4,s:'Quantum accelerates AI training; AI designs better quantum circuits'},
+  {a:0,b:5,s:'AI pilots autonomous spacecraft and processes deep-space data'},
+  {a:1,b:2,s:'Robots maintain reactors and handle hazardous nuclear materials safely'},
+  {a:1,b:3,s:'Machines pay for resources and earn from services — the machine economy'},
+  {a:1,b:4,s:'Quantum sensors guide nano-scale precision manufacturing'},
+  {a:1,b:5,s:'Robots build off-world habitats, mine asteroids, assemble space stations'},
+  {a:2,b:3,s:'Mining monetizes stranded nuclear energy; Bitcoin incentivizes clean power'},
+  {a:2,b:4,s:'Quantum computers simulate plasma physics to crack fusion'},
+  {a:2,b:5,s:'Nuclear thermal rockets and space reactors power deep-space missions'},
+  {a:3,b:4,s:'Quantum threatens current encryption but drives next-gen cryptographic protocols'},
+  {a:3,b:5,s:'Censorship-resistant money for interplanetary settlements and trade'},
+  {a:4,b:5,s:'Quantum sensors for navigation, gravitational mapping, and exoplanet detection'}
+];
+
+const svg = document.getElementById('svg');
+const cx = 1600, cy = 1150, r = 900;
+let selected = -1;
+
+// Position nodes in hexagon
+const positions = NODES.map((_, i) => {
+  const angle = -Math.PI/2 + (i * Math.PI * 2 / 6);
+  return { x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r };
+});
+
+// Draw connections first (behind nodes)
+const connGroup = document.createElementNS('http://www.w3.org/2000/svg','g');
+svg.appendChild(connGroup);
+const synEls = [];
+const synLabels = [];
+
+SYNERGIES.forEach((syn, si) => {
+  const p1 = positions[syn.a], p2 = positions[syn.b];
+  const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
+
+  // Connection line
+  const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1', p1.x); line.setAttribute('y1', p1.y);
+  line.setAttribute('x2', p2.x); line.setAttribute('y2', p2.y);
+  line.setAttribute('stroke', '#6CC8DE');
+  line.setAttribute('stroke-dasharray', '4,4');
+  line.classList.add('conn');
+  line.dataset.a = syn.a; line.dataset.b = syn.b;
+  connGroup.appendChild(line);
+  line.addEventListener('mouseenter',function(){synLabels[si].classList.add('show');});
+  line.addEventListener('mouseleave',function(){synLabels[si].classList.remove('show');});
+  synEls.push(line);
+
+  // Synergy label (hidden until active)
+  const labelG = document.createElementNS('http://www.w3.org/2000/svg','g');
+  labelG.classList.add('syn-label');
+
+  // Wrap text
+  const words = syn.s.split(' ');
+  const lines = []; let cur = '';
+  words.forEach(w => {
+    if ((cur + ' ' + w).length > 30) { lines.push(cur); cur = w; }
+    else cur = cur ? cur + ' ' + w : w;
+  });
+  if (cur) lines.push(cur);
+
+  const bgRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  bgRect.classList.add('syn-bg');
+  const tw = 600, th = lines.length * 38 + 30;
+  bgRect.setAttribute('x', mx - tw/2); bgRect.setAttribute('y', my - th/2);
+  bgRect.setAttribute('width', tw); bgRect.setAttribute('height', th);
+  labelG.appendChild(bgRect);
+
+  lines.forEach((l, li) => {
+    const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+    txt.classList.add('syn-text');
+    txt.setAttribute('x', mx);
+    txt.setAttribute('y', my - th/2 + 36 + li * 38);
+    txt.textContent = l;
+    labelG.appendChild(txt);
+  });
+
+  svg.appendChild(labelG);
+  synLabels.push(labelG);
+});
+
+// Center kept clean
+
+// Draw nodes
+const nodeEls = [];
+NODES.forEach((n, i) => {
+  const p = positions[i];
+  const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+  g.classList.add('node');
+  g.style.transformOrigin = `${p.x}px ${p.y}px`;
+
+  // Outer ring
+  const ring = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  ring.setAttribute('cx', p.x); ring.setAttribute('cy', p.y); ring.setAttribute('r', 100);
+  ring.setAttribute('stroke', n.color); ring.classList.add('node-ring');
+  g.appendChild(ring);
+
+  // Background circle
+  const bg = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  bg.setAttribute('cx', p.x); bg.setAttribute('cy', p.y); bg.setAttribute('r', 90);
+  bg.classList.add('node-bg'); bg.setAttribute('stroke', n.color);
+  g.appendChild(bg);
+
+  // SVG icon
+  const iconG = document.createElementNS('http://www.w3.org/2000/svg','g');
+  iconG.setAttribute('transform', 'translate('+p.x+','+p.y+') scale(2.8)');
+  const iconPath = document.createElementNS('http://www.w3.org/2000/svg','path');
+  iconPath.setAttribute('d', n.iconPath);
+  iconPath.setAttribute('fill', 'none');
+  iconPath.setAttribute('stroke', n.color);
+  iconPath.setAttribute('stroke-width', '2');
+  iconPath.setAttribute('stroke-linecap', 'round');
+  iconPath.setAttribute('stroke-linejoin', 'round');
+  if(n.iconFill) iconPath.setAttribute('fill', n.color);
+  iconG.appendChild(iconPath);
+  if(n.iconPath2){const p2=document.createElementNS('http://www.w3.org/2000/svg','path');p2.setAttribute('d',n.iconPath2);p2.setAttribute('fill','none');p2.setAttribute('stroke',n.color);p2.setAttribute('stroke-width','2');p2.setAttribute('stroke-linecap','round');iconG.appendChild(p2);}
+  g.appendChild(iconG);
+
+  // Label
+  const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+  label.setAttribute('x', p.x); label.setAttribute('y', p.y + 130);
+  label.classList.add('node-label'); label.setAttribute('fill', n.color);
+  label.textContent = n.label;
+  g.appendChild(label);
+
+  // Sub label
+  const sub = document.createElementNS('http://www.w3.org/2000/svg','text');
+  sub.setAttribute('x', p.x); sub.setAttribute('y', p.y + 160);
+  sub.classList.add('node-sub');
+  sub.textContent = n.sub;
+  g.appendChild(sub);
+
+  g.onclick = () => selectNode(i);
+  svg.appendChild(g);
+  nodeEls.push(g);
+});
+
+function selectNode(idx) {
+  if (selected === idx) { selected = -1; clearSelection(); return; }
+  selected = idx;
+  const n = NODES[idx];
+
+  // Update nodes
+  nodeEls.forEach((el, i) => {
+    el.classList.remove('selected', 'dimmed');
+    if (i === idx) el.classList.add('selected');
+    else {
+      const hasSyn = SYNERGIES.some(s => (s.a === idx && s.b === i) || (s.b === idx && s.a === i));
+      if (!hasSyn) el.classList.add('dimmed');
+    }
+  });
+
+  // Update connections
+  synEls.forEach((el, si) => {
+    const syn = SYNERGIES[si];
+    const active = syn.a === idx || syn.b === idx;
+    el.classList.toggle('active', active);
+    el.classList.toggle('pulse', active);
+    if (active) {
+      const otherIdx = syn.a === idx ? syn.b : syn.a;
+      el.setAttribute('stroke', NODES[otherIdx].color);
+    } else {
+      el.setAttribute('stroke', '#6CC8DE');
+    }
+  });
+
+  // Show synergy labels for active connections
+  synLabels.forEach((el, si) => {
+    const syn = SYNERGIES[si];
+    el.classList.toggle('show', syn.a === idx || syn.b === idx);
+  });
+
+  // Update info panel
+  document.getElementById('infoTitle').textContent = n.label + ' — ' + n.sub;
+  document.getElementById('infoTitle').style.color = n.color;
+  document.getElementById('infoDesc').textContent = n.desc;
+
+  // Show connection pills
+  const connsEl = document.getElementById('infoConns');
+  connsEl.innerHTML = '';
+  SYNERGIES.forEach((syn, si) => {
+    if (syn.a !== idx && syn.b !== idx) return;
+    const other = NODES[syn.a === idx ? syn.b : syn.a];
+    const pill = document.createElement('div');
+    pill.className = 'info-conn';
+    pill.innerHTML = `${n.label} <span class="arrow">↔</span> ${other.label}`;
+    pill.style.borderColor = other.color + '40';
+    pill.onclick = () => {
+      selectNode(syn.a === idx ? syn.b : syn.a);
+    };
+    connsEl.appendChild(pill);
+  });
+}
+
+function clearSelection() {
+  nodeEls.forEach(el => el.classList.remove('selected', 'dimmed'));
+  synEls.forEach(el => { el.classList.remove('active', 'pulse'); el.setAttribute('stroke', '#6CC8DE'); });
+  synLabels.forEach(el => el.classList.remove('show'));
+  document.getElementById('infoTitle').textContent = 'Click a technology to explore';
+  document.getElementById('infoTitle').style.color = 'var(--ice)';
+  document.getElementById('infoDesc').textContent = 'Each of the six cluster technologies connects to all five others, creating 15 synergy pairs. Together they form the convergence cluster that defines the Seventh Revolution — humanity\'s path to Type I civilization.';
+  document.getElementById('infoConns').innerHTML = '';
+}
+</script>
+</body>
+</html>

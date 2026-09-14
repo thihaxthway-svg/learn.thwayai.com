@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revolution Cycle Explorer</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a1929;--bg2:#0f2640;--bg3:#142d47;--ice:#6CC8DE;--ice-dim:rgba(108,200,222,.15);--text:#e0eaf4;--text2:#8ba3bd;--text3:#56728a;--bdr:rgba(255,255,255,.08);--serif:'DM Serif Display',Georgia,serif;--sans:'Outfit',-apple-system,sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);line-height:1.5;min-height:100vh;position:relative}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;
+  background-image:url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMTIiIGhlaWdodD0iMTk0Ij48cGF0aCBkPSJNNTYgMEwxMTIgMjh2NTZMMTEyIDExMiA1NiAxNDAgMCAxMTJWNTZMMCAyOHpNNTYgNTRMMTEyIDgydjU2bDAgMjgtNTYgMjhMMCAxNjZWMTEwTDAgODJ6IiBmaWxsPSJub25lIiBzdHJva2U9InJnYmEoMTA4LDIwMCwyMjIsLjA3KSIgc3Ryb2tlLXdpZHRoPSIuNiIvPjwvc3ZnPg==");
+  background-size:112px 194px;background-repeat:repeat}
+body::after{content:'';position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse at 20% 0%,rgba(108,200,222,.05) 0%,transparent 50%),
+             radial-gradient(ellipse at 80% 100%,rgba(108,200,222,.03) 0%,transparent 50%)}
+.hdr,.main,.fn,.footer{position:relative;z-index:1}
+.hdr{background:linear-gradient(135deg,#081525,var(--bg2));padding:1.1rem 1.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.6rem;border-bottom:1px solid var(--bdr)}
+.hdr h1{font-family:var(--serif);color:#fff;font-size:1.2rem}.hdr h1 span{color:var(--ice)}
+.tog{display:flex;background:rgba(255,255,255,.05);border-radius:6px;overflow:hidden;border:1px solid var(--bdr)}
+.tog button{font-family:var(--sans);font-size:.72rem;font-weight:500;padding:.34rem .85rem;border:none;background:0 0;color:var(--text3);cursor:pointer;transition:.25s;white-space:nowrap}
+.tog button.active{background:var(--ice);color:var(--bg)}.tog button:hover:not(.active){color:var(--text2)}
+.main{padding:1.1rem 1.5rem;max-width:1200px;margin:0 auto}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.4rem}
+.chip{display:flex;align-items:center;gap:.3rem;padding:.24rem .62rem;border-radius:100px;border:1px solid var(--bdr);background:rgba(255,255,255,.03);cursor:pointer;font-size:.72rem;font-weight:500;color:var(--text3);transition:.2s;user-select:none;backdrop-filter:blur(4px)}
+.chip .dot{width:7px;height:7px;border-radius:50%;opacity:.3;transition:.2s}
+.chip.on{border-color:currentColor;color:var(--text)}.chip.on .dot{opacity:1}
+.chip:hover{border-color:var(--text3);background:rgba(255,255,255,.05)}
+.chips-div{display:flex;align-items:center;gap:.6rem;margin:.65rem 0 .45rem;font-size:.66rem;font-weight:600;color:var(--ice);text-transform:uppercase;letter-spacing:.06em}
+.chips-div::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(108,200,222,.3),transparent)}
+.cw{position:relative;background:linear-gradient(180deg,var(--bg2),#0b2035);border:1px solid var(--bdr);border-radius:10px;overflow:hidden;box-shadow:0 4px 30px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.03);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.cw::before{content:'';position:absolute;top:-40%;right:-20%;width:500px;height:500px;background:radial-gradient(circle,rgba(108,200,222,.04) 0%,transparent 70%);pointer-events:none}
+.csv{display:block;width:100%;height:auto;position:relative;z-index:1}
+.pf{display:flex;border-top:1px solid var(--bdr);position:relative;z-index:1}
+.pl{flex:1;text-align:center;padding:.42rem .1rem;font-size:.64rem;font-weight:500;color:var(--text3);border-right:1px solid var(--bdr);line-height:1.2}.pl:last-child{border-right:none}.pl .pn{display:block;font-size:.52rem;opacity:.5}
+.zoom-hint{font-size:.62rem;color:var(--text3);text-align:right;margin-top:.35rem;display:block;opacity:.7}
+.zoom-hint.show{display:block}
+.fn{margin-top:.9rem;padding:.7rem .9rem;background:rgba(108,200,222,.04);border:1px solid rgba(108,200,222,.1);border-radius:8px;font-size:.68rem;color:var(--text2);line-height:1.55}
+.fn strong{color:var(--ice);font-weight:600}
+.footer{text-align:center;padding:1.2rem;font-size:.66rem;color:var(--text3);border-top:1px solid var(--bdr);margin-top:1.2rem}
+.footer a{color:var(--ice);text-decoration:none}.footer a:hover{text-decoration:underline}
+@media(max-width:700px){.hdr{flex-direction:column;align-items:flex-start}.chip{font-size:.66rem;padding:.18rem .45rem}.main{padding:.8rem 1rem}}
+</style>
+</head>
+<body>
+<div class="hdr"><h1>Revolution <span>Cycle</span> Explorer</h1><div class="tog"><button onclick="setMode('normalized')">Normalized</button><button class="active" onclick="setMode('realtime')">Real Time</button></div></div>
+<div class="main">
+  <div class="chips" id="mC"></div>
+  <div class="chips-div">The Seventh Revolution Technology Clusters</div>
+  <div class="chips" id="cC"></div>
+  <div class="cw" id="cw">
+    <svg id="svg" class="csv" viewBox="0 0 900 400" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="pf" id="pf"></div>
+  </div>
+  <div class="zoom-hint" id="zh">Scroll to zoom in/out · Drag to pan · Hover over curves to see timeline details · Double-click to reset view</div>
+  <div class="fn"><strong>What is intensity?</strong> A qualitative measure combining investment levels, public attention, media coverage, and institutional engagement with each technology — relative to its own era. Not measured in specific units. The five-phase pattern (Installation → Frenzy → Crash → Deployment → Transformation) is structural and repeats across every revolution in history. The curve's shape matters more than its height.</div>
+</div>
+<div class="footer">Created by <a href="https://thwayai.com" target="_blank">Thway AI LLC</a> · Companion to <em>The Seventh Revolution</em></div>
+
+<script>
+const NB=[0,.25,.43,.55,.78,1];
+const AI_C=[[1950,.02],[1953,.04],[1956,.07],[1958,.14],[1960,.26],[1962,.36],[1964,.45],[1966,.52],[1967,.48],[1969,.40],[1971,.28],[1973,.18],[1975,.12],[1978,.09],[1980,.07],[1982,.12],[1983,.22],[1985,.38],[1986,.50],[1987,.58],[1988,.48],[1990,.33],[1992,.20],[1994,.14],[1995,.11],[1997,.09],[1999,.10],[2001,.11],[2003,.12],[2005,.13],[2007,.14],[2009,.16],[2011,.18],[2012,.21],[2014,.28],[2016,.35],[2018,.43],[2020,.52],[2021,.57],[2022,.60],[2023,.63],[2024,.66],[2025,.68],[2026,.70],[2027,.76],[2028,.82],[2029,.88],[2030,.92],[2031,.88],[2032,.80],[2033,.72],[2034,.68],[2036,.70],[2038,.75],[2041,.82],[2045,.88],[2050,.93],[2055,.97],[2060,1]];
+const AI_A=[{y:1956,v:.07,l:'Dartmouth',s:'Installation · AI field born'},{y:1966,v:.50,l:'ELIZA',s:'Weizenbaum · The ELIZA effect'},{y:1969,v:.40,l:'Perceptrons',s:'Minsky & Papert · Neural nets killed'},{y:1973,v:.21,l:'Lighthill Report',s:'Crash · UK defunds AI'},{y:1986,v:.50,l:'Backpropagation',s:'Hinton · Most important algorithm'},{y:1987,v:.58,l:'Expert Systems Peak',s:'Japan 5th Gen · $1B Lisp machines'},{y:1992,v:.20,l:'Second Winter',s:'Crash · Symbolics bankrupt'},{y:2012,v:.21,l:'AlexNet',s:'Deep learning · ImageNet breakthrough'},{y:2016,v:.35,l:'AlphaGo',s:'DeepMind · Beat Lee Sedol'},{y:2020,v:.52,l:'GPT-3',s:'175B params · Scaling hypothesis'},{y:2022,v:.60,l:'ChatGPT',s:'Frenzy · 100M users in 2 months'},{y:2026,v:.70,l:'2026',s:'Current · Still climbing'}];
+
+const D=[
+// === MACRO (no AI — it's in cluster as AI Brain) ===
+{id:'agri',g:'m',name:'Agriculture',c:'#FACC15',phases:[{n:'Installation',s:-10000,e:-8000,d:'Early farming in the Fertile Crescent.'},{n:'Frenzy',s:-8000,e:-6000,d:'Rapid spread. Farming outcompeted nomads.'},{n:'Crash',s:-6000,e:-5000,d:'Disease, crop failure, settlements abandoned.'},{n:'Deployment',s:-5000,e:-4000,d:'Crop rotation, irrigation, selective breeding.'},{n:'Transformation',s:-4000,e:-3000,d:'Civilization: writing, cities, law, empires.'}],curve:[[-10000,.03],[-9600,.05],[-9200,.08],[-8800,.12],[-8400,.17],[-8000,.23],[-7600,.33],[-7200,.45],[-6800,.60],[-6400,.76],[-6100,.89],[-5900,.96],[-5700,1],[-5500,.88],[-5200,.65],[-5000,.45],[-4800,.32],[-4600,.26],[-4400,.28],[-4200,.33],[-4000,.40],[-3800,.50],[-3600,.58],[-3400,.65],[-3200,.72],[-3000,.78]],ann:[{y:-10000,v:.03,l:'First Seeds',s:'Installation · 10,000 BC'},{y:-8000,v:.23,l:'Farming Spreads',s:'Frenzy begins · Outcompetes foraging'},{y:-5700,v:1,l:'Peak Expansion',s:'Frenzy peak · Nile, Mediterranean'},{y:-5000,v:.45,l:'Settlements Collapse',s:'Crash · Disease, crop failure'},{y:-4000,v:.40,l:'Irrigation 0026 Plow',s:'Deployment · Anonymous progress'},{y:-3000,v:.78,l:'First Civilizations',s:'Transformation · Writing, cities, law'}]},
+{id:'water',g:'m',name:'Water & Textiles',c:'#3B82F6',phases:[{n:'Installation',s:1760,e:1780,d:'Arkwright, Hargreaves, Cartwright.'},{n:'Frenzy',s:1780,e:1795,d:'Canal mania.'},{n:'Crash',s:1795,e:1800,d:'Canal shares crashed.'},{n:'Deployment',s:1800,e:1820,d:'Factory system. Luddites.'},{n:'Transformation',s:1820,e:1840,d:'Workshop of the world.'}],curve:[[1760,.04],[1765,.10],[1770,.18],[1775,.28],[1780,.38],[1783,.52],[1786,.67],[1789,.82],[1791,.93],[1793,1],[1795,.82],[1797,.58],[1799,.38],[1800,.28],[1803,.26],[1808,.32],[1813,.40],[1818,.48],[1822,.56],[1827,.64],[1832,.70],[1837,.76],[1840,.80]],ann:[{y:1764,v:.08,l:'Spinning Jenny',s:'Installation · 1764'},{y:1780,v:.38,l:'Factory System',s:'Frenzy begins · River power'},{y:1793,v:1,l:'Canal Mania Peak',s:'Frenzy · First tech bubble'},{y:1800,v:.28,l:'Canal Crash',s:'Crash · Shares collapsed'},{y:1811,v:.36,l:'Luddites',s:'Deployment · Machines smashed'},{y:1840,v:.80,l:'Workshop of the World',s:'Transformation · Industrial Britain'}]},
+{id:'steam',g:'m',name:'Steam & Railways',c:'#EC4899',phases:[{n:'Installation',s:1770,e:1830,d:'Steam as "better water wheel."'},{n:'Frenzy',s:1830,e:1847,d:'Railway mania. 240+ bills in 1845.'},{n:'Crash',s:1847,e:1850,d:'Hundreds of companies failed.'},{n:'Deployment',s:1850,e:1860,d:'Track carried real commerce.'},{n:'Transformation',s:1860,e:1870,d:'National markets. Time zones.'}],curve:[[1770,.03],[1780,.06],[1790,.10],[1800,.14],[1810,.18],[1820,.24],[1828,.30],[1832,.40],[1835,.52],[1838,.65],[1841,.78],[1843,.88],[1845,.96],[1846,1],[1847,.80],[1848,.52],[1849,.35],[1850,.26],[1852,.28],[1855,.36],[1858,.44],[1862,.52],[1865,.62],[1868,.70],[1870,.76]],ann:[{y:1776,v:.05,l:"Watt's Engine",s:'Installation · 1776'},{y:1830,v:.30,l:'First Railways',s:'Frenzy begins · Iron road'},{y:1845,v:.96,l:'Railway Mania',s:'Frenzy · 240+ bills in Parliament'},{y:1847,v:.80,l:'1847 Crash',s:'Crash · Hundreds of companies failed'},{y:1855,v:.36,l:'Network Built',s:'Deployment · Speculative track now useful'},{y:1870,v:.76,l:'National Markets',s:'Transformation · Time zones invented'}]},
+{id:'steel',g:'m',name:'Steel & Electricity',c:'#CBD5E1',phases:[{n:'Installation',s:1870,e:1890,d:'Carnegie. Edison. Bell.'},{n:'Frenzy',s:1890,e:1893,d:'Gilded Age.'},{n:'Crash',s:1893,e:1897,d:'Panic of 1893.'},{n:'Deployment',s:1897,e:1920,d:'Electrification spread.'},{n:'Transformation',s:1920,e:1940,d:'Modern corporations.'}],curve:[[1870,.04],[1875,.10],[1878,.16],[1882,.24],[1885,.33],[1888,.44],[1890,.58],[1891,.74],[1892,.90],[1893,1],[1894,.68],[1895,.45],[1896,.32],[1897,.24],[1900,.26],[1905,.32],[1910,.40],[1915,.48],[1920,.55],[1925,.62],[1930,.68],[1935,.74],[1940,.80]],ann:[{y:1876,v:.12,l:'Bell Telephone',s:'Installation · 1876'},{y:1882,v:.24,l:'Pearl Street Station',s:'Installation · Edison lights Manhattan'},{y:1892,v:.90,l:'Homestead Strike',s:'Frenzy · Pinkerton agents, 10 dead'},{y:1893,v:1,l:'Panic of 1893',s:'Crash · Banks failed, 25% unemployment'},{y:1901,v:.27,l:'U.S. Steel',s:'Deployment · First billion-dollar corporation'},{y:1920,v:.55,l:'Electrification',s:'Transformation · Daily life electrified'},{y:1940,v:.80,l:'Modern Corporation',s:'Transformation · Skyscrapers, finance'}]},
+{id:'oil',g:'m',name:'Oil & Automobiles',c:'#EF4444',phases:[{n:'Installation',s:1900,e:1920,d:'Ford. Model T. Assembly line.'},{n:'Frenzy',s:1920,e:1929,d:'Roaring Twenties.'},{n:'Crash',s:1929,e:1933,d:'Black Tuesday. Deepest crash.'},{n:'Deployment',s:1933,e:1950,d:'WWII infrastructure.'},{n:'Transformation',s:1950,e:1960,d:'Suburbs. Consumer economy.'}],curve:[[1900,.03],[1905,.08],[1908,.14],[1912,.22],[1916,.30],[1920,.38],[1922,.52],[1924,.66],[1926,.80],[1928,.93],[1929,1],[1930,.68],[1931,.42],[1932,.25],[1933,.15],[1935,.18],[1938,.24],[1941,.32],[1944,.40],[1947,.48],[1950,.56],[1953,.64],[1956,.72],[1958,.78],[1960,.82]],ann:[{y:1908,v:.14,l:'Model T',s:'Installation · Ford, $850 to $260'},{y:1914,v:.22,l:'$5/Day Wage',s:'Installation · Workers become customers'},{y:1926,v:.80,l:'60% Cars on Credit',s:'Frenzy · Consumer debt era'},{y:1929,v:1,l:'Black Tuesday',s:'Crash · Deepest of any revolution'},{y:1933,v:.15,l:'Depression Bottom',s:'9,000+ banks failed, 25% unemployed'},{y:1947,v:.48,l:'Postwar Boom',s:'Deployment · Highways, suburbs, pipelines'},{y:1956,v:.72,l:'Interstate Act',s:'Transformation · America reshaped'}]},
+{id:'it',g:'m',name:'Information Technology',c:'#34D399',phases:[{n:'Installation',s:1970,e:1993,d:'Microprocessor. PC. WWW.'},{n:'First Frenzy',s:1993,e:2000,d:'Dot-com bubble. NASDAQ soars.'},{n:'First Crash',s:2000,e:2002,d:'NASDAQ lost 78%. Trillions evaporated.'},{n:'Second Frenzy',s:2003,e:2007,d:'Capital migrates to real estate. IT-enabled securitization.'},{n:'Second Crash',s:2007,e:2009,d:'Lehman collapses. Global financial crisis.'},{n:'Deployment',s:2009,e:2015,d:'Broadband. Cloud. Smartphones. Social media.'},{n:'Transformation',s:2015,e:2025,d:'Platform economy. Industries disrupted.'}],curve:[[1970,.03],[1975,.06],[1978,.09],[1981,.13],[1984,.16],[1987,.20],[1990,.25],[1993,.30],[1995,.42],[1996,.55],[1997,.68],[1998,.80],[1999,.90],[2000,.88],[2001,.55],[2002,.28],[2003,.32],[2004,.45],[2005,.60],[2006,.78],[2007,.95],[2007.5,1],[2008,.52],[2009,.28],[2010,.32],[2011,.38],[2012,.44],[2013,.50],[2015,.58],[2017,.66],[2019,.74],[2020,.78],[2022,.82],[2025,.86]],ann:[{y:1971,v:.03,l:'Microprocessor',s:'Installation · Intel 4004'},{y:1981,v:.13,l:'IBM PC',s:'Installation · Personal computing'},{y:1991,v:.25,l:'World Wide Web',s:'Installation · Berners-Lee'},{y:2000,v:.88,l:'Dot-com Peak',s:'First Frenzy · Pets.com, AOL-Time Warner'},{y:2002,v:.28,l:'NASDAQ -78%',s:'First Crash · Trillions evaporated'},{y:2004,v:.45,l:'Capital Migrates',s:'Speculative capital flees to real estate'},{y:2005,v:.60,l:'Facebook & YouTube',s:'Deployment seeds · Social + video born'},{y:2007.5,v:1,l:'Housing Peak',s:'Second Frenzy · IT-enabled securitization'},{y:2008,v:.52,l:'Lehman Collapse',s:'Second Crash · Global financial crisis'},{y:2009,v:.28,l:'Bitcoin Born',s:'Genesis block · Jan 3, 2009'},{y:2012,v:.44,l:'Cloud & Mobile',s:'Deployment · Infrastructure matures'},{y:2020,v:.78,l:'Platform Economy',s:'Transformation · Industries disrupted'}]},
+// === CLUSTER ===
+{id:'cl_ai',g:'c',name:'AI (Brain)',c:'#6CC8DE',phases:[{n:'Installation',s:1950,e:2012,d:'Three sub-cycles, each floor higher.'},{n:'Frenzy',s:2012,e:2027,d:'AlexNet → ChatGPT. Hundreds of billions.'},{n:'Crash',s:2027,e:2032,d:'Projected. Higher floor.'},{n:'Deployment',s:2032,e:2045,d:'Projected. Real economy.'},{n:'Transformation',s:2045,e:2060,d:'Projected. Cluster critical mass.'}],futureYear:2026,curve:AI_C,ann:AI_A},
+{id:'cl_btc',g:'c',name:'Bitcoin (Wallet)',c:'#F97316',phases:[{n:'Installation',s:2009,e:2020,d:'Genesis block. Multiple hype/crash cycles.'},{n:'Frenzy',s:2020,e:2026,d:'ETFs. Nation-state reserves. $100K+.'},{n:'Crash',s:2026,e:2029,d:'Projected correction.'},{n:'Deployment',s:2029,e:2040,d:'Lightning matures. Machine payments.'},{n:'Transformation',s:2040,e:2055,d:'Global settlement layer.'}],futureYear:2026,
+curve:[[2009,.01],[2010,.03],[2011,.22],[2012,.05],[2013,.35],[2014,.09],[2015,.06],[2016,.12],[2017,.50],[2018,.13],[2019,.10],[2020,.22],[2021,.58],[2022,.16],[2023,.22],[2024,.45],[2025,.65],[2026,.45],[2027,.32],[2028,.36],[2029,.48],[2030,.58],[2031,.65],[2032,.52],[2033,.45],[2035,.48],[2036,.56],[2037,.62],[2038,.68],[2039,.58],[2040,.55],[2042,.58],[2044,.64],[2046,.70],[2048,.66],[2050,.68],[2053,.72],[2055,.75]],ann:[{y:2009,v:.01,l:'Genesis Block (2009)',s:'Satoshi Nakamoto · Pizza Day: 10K BTC for 2 pizzas'},{y:2011,v:.22,l:'First Bubble ($31)',s:'Crash to $2'},{y:2013,v:.35,l:'$1K · Silk Road',s:'FBI shutdown · First mainstream attention'},{y:2014,v:.09,l:'Mt Gox Collapse',s:'Crash · 850K BTC stolen'},{y:2017,v:.50,l:'$20K · ICO Mania',s:'Frenzy · Speculative peak'},{y:2021,v:.58,l:'$69K · El Salvador',s:'First nation-state adoption'},{y:2018,v:.13,l:'$3.2K Bottom',s:'Crash · 80% decline from $20K'},{y:2022,v:.16,l:'FTX Collapse',s:'Crash · Fraud conviction'},{y:2024,v:.45,l:'ETFs Approved',s:'BlackRock, Fidelity · Institutions'},{y:2025,v:.65,l:'$125K Peak',s:'Nation-state reserves · Strategic BTC Reserve'}]},
+{id:'cl_space',g:'c',name:'Space (Frontier)',c:'#818CF8',phases:[{n:'Installation',s:1942,e:1957,d:'V-2 rockets. Sputnik.'},{n:'Frenzy',s:1957,e:1969,d:'Space Race. Moon landing.'},{n:'Crash',s:1969,e:2002,d:'The Long Retreat. Decades of stagnation.'},{n:'Deployment',s:2002,e:2025,d:'SpaceX. 97% cost reduction.'},{n:'Transformation',s:2025,e:2060,d:'Starship. Artemis. Mars.'}],futureYear:2026,
+curve:[[1942,.02],[1945,.04],[1950,.08],[1955,.15],[1957,.28],[1960,.48],[1963,.65],[1966,.84],[1969,1],[1972,.72],[1975,.42],[1978,.30],[1981,.25],[1986,.18],[1990,.15],[1995,.12],[2000,.11],[2002,.12],[2006,.15],[2010,.22],[2013,.30],[2016,.38],[2019,.48],[2022,.58],[2024,.66],[2026,.73],[2030,.78],[2035,.82],[2040,.85],[2050,.88],[2060,.90]],ann:[{y:1957,v:.28,l:'Sputnik',s:'Frenzy begins · 1957'},{y:1969,v:1,l:'Moon Landing',s:'Frenzy peak · One small step'},{y:1972,v:.72,l:'Apollo Ends',s:'Crash begins · Budget cuts'},{y:1986,v:.18,l:'Challenger',s:'Crash · Long Retreat deepens'},{y:2002,v:.12,l:'SpaceX Founded',s:'Deployment begins · 2002'},{y:2020,v:.52,l:'Crew Dragon',s:'97% cost reduction'},{y:2026,v:.73,l:'Starship Era',s:'Transformation begins'}]},
+{id:'cl_nuc',g:'c',name:'Nuclear (Fuel)',c:'#4ADE80',phases:[{n:'Installation',s:1942,e:1960,d:'Manhattan Project. First plants.'},{n:'Frenzy',s:1960,e:1979,d:'Nuclear construction boom. Atoms for Peace.'},{n:'Crash 1: TMI',s:1979,e:1983,d:'Three Mile Island. US construction halts.'},{n:'Partial Recovery',s:1983,e:1986,d:'France doubles down. Some plants resume.'},{n:'Crash 2: Chernobyl',s:1986,e:1993,d:'Chernobyl. Europe retreats. Italy shuts down.'},{n:'Partial Recovery',s:1993,e:2011,d:'Existing plants run. Japan restarts.'},{n:'Crash 3: Fukushima',s:2011,e:2016,d:'Fukushima. Germany phases out. Third winter.'},{n:'Deployment',s:2016,e:2035,d:'SMRs. Fusion progress. AI energy demand.'},{n:'Transformation',s:2035,e:2060,d:'Fusion achieved. Key to Type I.'}],futureYear:2026,
+curve:[[1942,.02],[1948,.06],[1954,.14],[1958,.26],[1962,.40],[1965,.56],[1968,.70],[1971,.82],[1974,.92],[1977,1],[1979,.78],[1980,.58],[1982,.42],[1983,.35],[1984,.40],[1985,.48],[1986,.30],[1988,.20],[1990,.16],[1993,.18],[1996,.22],[1999,.28],[2002,.34],[2005,.40],[2008,.45],[2010,.48],[2011,.28],[2013,.18],[2015,.15],[2016,.16],[2018,.20],[2020,.26],[2022,.34],[2024,.40],[2026,.48],[2030,.58],[2035,.68],[2040,.76],[2050,.84],[2060,.90]],ann:[{y:1954,v:.14,l:'First Nuclear Plant',s:'Installation \xb7 Atoms for Peace'},{y:1965,v:.56,l:'Too Cheap to Meter',s:'Frenzy \xb7 Construction boom begins'},{y:1977,v:1,l:'Peak Construction',s:'Frenzy peak \xb7 Hundreds of plants'},{y:1979,v:.78,l:'Three Mile Island',s:'Crash 1 \xb7 Public trust shattered'},{y:1983,v:.35,l:'Crash 1 Bottom',s:'US construction halts \xb7 No new orders'},{y:1985,v:.48,l:'France Doubles Down',s:'Partial recovery \xb7 70% nuclear electricity'},{y:1986,v:.30,l:'Chernobyl',s:'Crash 2 \xb7 Catastrophe. Global fear.'},{y:1990,v:.16,l:'Europe Retreats',s:'Italy shuts down \xb7 Austria bans nuclear'},{y:2005,v:.40,l:'Quiet Recovery',s:'Existing plants run \xb7 Nuclear renaissance talk'},{y:2011,v:.28,l:'Fukushima',s:'Crash 3 \xb7 Germany phases out. Japan halts.'},{y:2015,v:.15,l:'Crash 3 Bottom',s:'Lowest point \xb7 36 years of crashes'},{y:2020,v:.26,l:'AI Energy Crisis',s:'Deployment \xb7 Data centers need nuclear'},{y:2026,v:.48,l:'SMR Revival',s:'Deployment \xb7 Small modular reactors'}]},
+{id:'cl_qm',g:'c',name:'Quantum (Accelerator)',c:'#C084FC',phases:[{n:'Installation',s:1980,e:2025,d:'Feynman\'s proposal. First qubits. Decades of research.'},{n:'Frenzy',s:2025,e:2035,d:'Projected. Investment surge.'},{n:'Crash',s:2035,e:2038,d:'Projected.'},{n:'Deployment',s:2038,e:2050,d:'Projected. Practical quantum advantage.'},{n:'Transformation',s:2050,e:2060,d:'Quantum-AI synergy.'}],futureYear:2026,
+curve:[[1980,.01],[1985,.02],[1990,.03],[1995,.04],[1998,.06],[2001,.08],[2005,.10],[2010,.14],[2015,.20],[2019,.30],[2021,.35],[2023,.40],[2025,.46],[2026,.50],[2028,.56],[2030,.62],[2032,.68],[2035,.75],[2037,.65],[2038,.55],[2040,.58],[2045,.68],[2050,.78],[2055,.84],[2060,.88]],ann:[{y:1982,v:.01,l:"Feynman's Proposal",s:'Installation · Quantum idea born'},{y:1994,v:.04,l:"Shor's Algorithm",s:'Installation · Encryption threat'},{y:2019,v:.30,l:'Google Supremacy',s:'200 seconds vs 10,000 years'},{y:2024,v:.42,l:'Google Willow',s:'Error correction threshold crossed'},{y:2026,v:.50,l:'IBM Nighthawk',s:'Frenzy · Quantum advantage target'}]},
+{id:'cl_rob',g:'c',name:'Robotics (Body)',c:'#FB7185',phases:[{n:'Installation',s:1961,e:2015,d:'Unimate. Industrial automation.'},{n:'Frenzy',s:2015,e:2028,d:'Tesla Optimus. Figure. Humanoid race.'},{n:'Crash',s:2028,e:2032,d:'Projected.'},{n:'Deployment',s:2032,e:2045,d:'Projected. Robots everywhere.'},{n:'Transformation',s:2045,e:2060,d:'Physical labor transformed.'}],futureYear:2026,
+curve:[[1961,.02],[1965,.05],[1970,.10],[1975,.14],[1980,.22],[1985,.30],[1990,.34],[1995,.32],[2000,.30],[2005,.32],[2010,.36],[2015,.42],[2018,.50],[2020,.56],[2022,.64],[2024,.74],[2026,.82],[2028,.88],[2030,.78],[2032,.68],[2035,.70],[2038,.74],[2041,.78],[2045,.82],[2050,.86],[2055,.90],[2060,.92]],ann:[{y:1961,v:.02,l:'Unimate',s:'Installation · First industrial robot'},{y:1969,v:.10,l:'Shakey',s:'Installation · First AI robot'},{y:1985,v:.30,l:'Industrial Boom',s:'Installation · Auto manufacturing'},{y:2005,v:.32,l:'DARPA Challenge',s:'Installation · Autonomous vehicles'},{y:2014,v:.28,l:'Tesla Autopilot',s:'AI-robotics · Mass consumer product'},{y:2022,v:.64,l:'Optimus Unveiled',s:'Frenzy · Humanoid race begins'},{y:2026,v:.82,l:'Figure · 1X · Optimus',s:'Frenzy · AI-powered humanoids'}]}
+];
+
+let mode='realtime',active=new Set(['agri','water','steam','steel','oil','it','cl_ai','cl_btc']);
+let vS=-10500,vE=2080;const ZF=-10500,ZT=2080;
+
+// Virtual timeline (compress gap)
+function yV(yr){if(yr<=-3000)return(yr+10000)/100;if(yr>=1750)return 85+(yr-1750);return 70+((yr+3000)/4750)*15;}
+function vY(v){if(v<=70)return v*100-10000;if(v>=85)return(v-85)+1750;return((v-70)/15)*4750-3000;}
+
+const W=900,H=400,PL=42,PT=28,PR=15,PB=35,CW_=W-PL-PR,CH_=H-PT-PB;
+function xRT(yr){const v=yV(yr),vs=yV(Math.max(-10000,vS)),ve=yV(Math.min(2080,vE));return PL+((v-vs)/(ve-vs))*CW_;}
+function xNm(yr,r){for(let i=0;i<r.phases.length;i++){const p=r.phases[i];if(yr>=p.s&&yr<=p.e)return PL+(NB[i]+((yr-p.s)/(p.e-p.s))*(NB[i+1]-NB[i]))*CW_;}return yr<r.phases[0].s?PL:PL+CW_;}
+function xOf(yr,r){return mode==='realtime'?xRT(yr):xNm(yr,r);}
+function yOf(v){return PT+(1-v)*CH_;}
+
+function sP(pts){if(pts.length<2)return'';let d=`M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;for(let i=1;i<pts.length;i++){const p=pts[i-1],c=pts[i],x=((p[0]+c[0])/2).toFixed(1);d+=` C${x},${p[1].toFixed(1)} ${x},${c[1].toFixed(1)} ${c[0].toFixed(1)},${c[1].toFixed(1)}`;}return d;}
+function aP(pts){if(pts.length<2)return'';const b=PT+CH_;let d=`M${pts[0][0].toFixed(1)},${b} L${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;for(let i=1;i<pts.length;i++){const p=pts[i-1],c=pts[i],x=((p[0]+c[0])/2).toFixed(1);d+=` C${x},${p[1].toFixed(1)} ${x},${c[1].toFixed(1)} ${c[0].toFixed(1)},${c[1].toFixed(1)}`;}d+=` L${pts[pts.length-1][0].toFixed(1)},${b} Z`;return d;}
+
+function render(){
+  const svg=document.getElementById('svg');let h='';
+  // Grid
+  for(let v=.25;v<=.75;v+=.25){const y=yOf(v);h+=`<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="rgba(255,255,255,.04)"/>`;}
+  h+=`<line x1="${PL}" y1="${PT+CH_}" x2="${W-PR}" y2="${PT+CH_}" stroke="rgba(255,255,255,.08)"/>`;
+  h+=`<text x="14" y="${PT+CH_/2}" text-anchor="middle" font-family="Outfit" font-size="9" fill="rgba(255,255,255,.2)" transform="rotate(-90,14,${PT+CH_/2})">intensity →</text>`;
+
+  if(mode==='normalized'){
+    for(let i=1;i<5;i++){const x=PL+NB[i]*CW_;h+=`<line x1="${x}" y1="${PT-5}" x2="${x}" y2="${PT+CH_}" stroke="rgba(255,255,255,.08)" stroke-dasharray="4,3"/>`;}
+  } else {
+    // Zigzag break
+    const gL=xRT(-3000),gR=xRT(1750);
+    if(gR-gL>10&&gL>PL+5&&gR<W-PR-5){
+      h+=`<rect x="${gL}" y="${PT}" width="${gR-gL}" height="${CH_}" fill="${'rgba(10,25,41,.9)'}"/>`;
+      const mx=(gL+gR)/2;for(let y=PT+12;y<PT+CH_-12;y+=16)h+=`<path d="M${gL+3},${y} L${mx},${y+7} L${gR-3},${y}" stroke="rgba(255,255,255,.08)" fill="none"/>`;
+    }
+    // Agriculture year labels
+    if(vS<-2000){const aS=2000;for(let yr=Math.ceil(-10000/aS)*aS;yr<=-3000;yr+=aS){const x=xRT(yr);if(x>=PL+5&&x<=W-PR-5)h+=`<text x="${x}" y="${H-8}" text-anchor="middle" font-family="Outfit" font-size="9" fill="rgba(255,255,255,.25)">${fY(yr)}</text><line x1="${x}" y1="${PT+CH_}" x2="${x}" y2="${PT+CH_+4}" stroke="rgba(255,255,255,.1)"/>`;}}
+    // Modern year labels (step based on modern range, not total)
+    if(vE>1750){const mr=Math.min(2070,vE)-Math.max(1750,vS);let ms=50;if(mr<30)ms=5;else if(mr<80)ms=10;else if(mr<200)ms=20;else ms=50;const f=Math.ceil(Math.max(1750,vS)/ms)*ms;for(let yr=f;yr<=Math.min(2070,vE);yr+=ms){const x=xRT(yr);if(x>=PL+5&&x<=W-PR-5)h+=`<text x="${x}" y="${H-8}" text-anchor="middle" font-family="Outfit" font-size="9" fill="rgba(255,255,255,.25)">${yr}</text><line x1="${x}" y1="${PT+CH_}" x2="${x}" y2="${PT+CH_+4}" stroke="rgba(255,255,255,.1)"/><line x1="${x}" y1="${PT}" x2="${x}" y2="${PT+CH_}" stroke="rgba(255,255,255,.03)"/>`;}}
+  }
+
+  // Curves
+  D.forEach(r=>{
+    if(!active.has(r.id))return;
+    const fy=r.futureYear||99999;
+    const sp=r.curve.filter(p=>p[0]<=fy).map(([y,v])=>[xOf(y,r),yOf(v)]);
+    const dp=r.curve.filter(p=>p[0]>=fy).map(([y,v])=>[xOf(y,r),yOf(v)]);
+    if(dp.length>0&&sp.length>0)dp.unshift(sp[sp.length-1]);
+    if(sp.length>1){h+=`<path d="${aP(sp)}" fill="${r.c}" opacity="0.08"/>`;h+=`<path d="${sP(sp)}" fill="none" stroke="${r.c}" stroke-width="2" opacity="0.9"/>`;}
+    if(dp.length>1)h+=`<path d="${sP(dp)}" fill="none" stroke="${r.c}" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.45"/>`;
+    const all=r.curve.map(([y,v])=>[xOf(y,r),yOf(v)]);
+    h+=`<path d="${sP(all)}" fill="none" stroke="transparent" stroke-width="20" data-r="${r.id}" style="cursor:pointer" onmouseenter="showAnn('${r.id}')" onmouseleave="clearAnn()"/>`;
+  });
+  h+=`<g id="annG"></g>`;
+
+  svg.innerHTML=h;
+  const f=document.getElementById('pf');
+  if(mode==='normalized'){f.innerHTML=['Installation','Frenzy','Crash','Deployment','Transformation'].map((n,i)=>`<div class="pl" style="flex:${NB[i+1]-NB[i]}"><span class="pn">Phase ${i+1}</span>${n}</div>`).join('');f.style.display='flex';}else f.style.display='none';
+  document.getElementById('zh').classList.toggle('show',mode==='realtime');
+}
+
+function getCurveV(curve,yr){for(let i=0;i<curve.length-1;i++){if(curve[i][0]<=yr&&curve[i+1][0]>=yr){const t=(yr-curve[i][0])/(curve[i+1][0]-curve[i][0]);return curve[i][1]+t*(curve[i+1][1]-curve[i][1]);}}const ex=curve.find(p=>p[0]===yr);return ex?ex[1]:curve[curve.length-1][1];}
+function showAnn(id){const r=D.find(x=>x.id===id);const g=document.getElementById('annG');if(!r||!r.ann||!g){if(g)g.innerHTML='';return;}
+let h='';const positions=[];
+r.ann.forEach(a=>{const v=getCurveV(r.curve,a.y);const ax=xOf(a.y,r),ay=yOf(v);const above=v>0.4;
+let dy1=above?-14:14;let dy2=above?-4:24;
+// Check for overlap with previous annotations and stagger if needed
+for(const prev of positions){if(Math.abs(ax-prev.x)<60&&Math.abs(ay-prev.y)<30){dy1+=(above?-18:18);dy2+=(above?-18:18);break;}}
+positions.push({x:ax,y:ay});
+h+=`<circle cx="${ax}" cy="${ay}" r="4" fill="${r.c}" stroke="rgba(10,25,41,.9)" stroke-width="2"><animate attributeName="r" from="0" to="4" dur="0.15s"/></circle>`;
+h+=`<text x="${ax}" y="${ay+dy1}" text-anchor="middle" font-family="Outfit" font-size="8.5" font-weight="700" fill="${r.c}" stroke="rgba(10,25,41,.7)" stroke-width="3" paint-order="stroke">${a.l}</text>`;
+if(a.s)h+=`<text x="${ax}" y="${ay+dy2}" text-anchor="middle" font-family="Outfit" font-size="6.5" fill="${r.c}" opacity="0.6" stroke="rgba(10,25,41,.6)" stroke-width="2.5" paint-order="stroke">${a.s}</text>`;
+});g.innerHTML=h;}
+function clearAnn(){const g=document.getElementById('annG');if(g)g.innerHTML='';}
+
+// Zoom & Pan
+!function(){
+  const el=document.getElementById('cw');
+  el.addEventListener('wheel',e=>{if(mode!=='realtime')return;e.preventDefault();const rc=el.getBoundingClientRect();const pct=(e.clientX-rc.left)/rc.width;const myr=vY(yV(vS)+(yV(vE)-yV(vS))*pct);const f=e.deltaY>0?1.18:.85;const rng=vE-vS;const nr=Math.max(30,Math.min(ZT-ZF,rng*f));vS=myr-pct*nr;vE=myr+(1-pct)*nr;if(vS<ZF){vS=ZF;vE=vS+nr;}if(vE>ZT){vE=ZT;vS=vE-nr;}render();},{passive:false});
+  let pan=false,px,pvS,pvE;
+  el.addEventListener('pointerdown',e=>{if(mode!=='realtime'||e.target.closest('.tt'))return;pan=true;px=e.clientX;pvS=vS;pvE=vE;el.style.cursor='grabbing';el.setPointerCapture(e.pointerId);});
+  el.addEventListener('pointermove',e=>{if(!pan)return;const rc=el.getBoundingClientRect();const dx=e.clientX-px;const vr=yV(pvE)-yV(pvS);const dv=-(dx/rc.width)*vr;const ns=yV(pvS)+dv;vS=vY(Math.max(yV(ZF),Math.min(yV(ZT)-vr,ns)));vE=vY(Math.max(yV(ZF)+vr,Math.min(yV(ZT),yV(pvE)+dv)));render();});
+  const end=()=>{if(pan){pan=false;el.style.cursor='';}};
+  el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
+}();
+
+function buildChips(){
+  [['mC','m'],['cC','c']].forEach(([elId,g])=>{const el=document.getElementById(elId);el.innerHTML='';D.filter(r=>r.g===g).forEach(r=>{const ch=document.createElement('div');ch.className='chip'+(active.has(r.id)?' on':'');ch.innerHTML=`<div class="dot" style="background:${r.c}"></div>${r.name}`;ch.onclick=()=>{active.has(r.id)?active.delete(r.id):active.add(r.id);ch.classList.toggle('on');render();};el.appendChild(ch);});});
+}
+function setMode(m){mode=m;document.querySelectorAll('.tog button').forEach(b=>b.classList.toggle('active',(m==='normalized'&&b.textContent==='Normalized')||(m==='realtime'&&b.textContent==='Real Time')));vS=ZF;vE=ZT;render();}
+function fY(y){return y<0?Math.abs(y).toLocaleString()+' BC':y.toString();}
+
+buildChips();render();
+</script>
+</body>
+</html>
